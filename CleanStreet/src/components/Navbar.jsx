@@ -12,10 +12,12 @@ import {
   ShieldCheck, 
   Menu, 
   X, 
-  CheckCircle2,
-  Trash2
+  User,
+  HardHat,
+  ChevronDown
 } from 'lucide-react';
 import logoUrl from '../assets/logo.png';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ 
   theme, 
@@ -24,6 +26,7 @@ export default function Navbar({
   notifications = [], 
   onMarkNotificationsRead 
 }) {
+  const { user, setIsAuthModalOpen } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
@@ -31,93 +34,128 @@ export default function Navbar({
 
   return (
     <header className="public-nav wrap">
+      {/* Brand */}
       <Link to="/" className="brand" aria-label="CleanStreet Home">
         <img className="brand-logo" src={logoUrl} alt="Clean Streets logo" />
         <span className="brand-wordmark">
           Clean<span>Street</span>
-          <small>Smart Hyderabad Civic Waste Management</small>
+          <small>Hyderabad Civic Waste Management</small>
         </span>
       </Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        {/* Desktop Links */}
-        <nav className={mobileMenuOpen ? 'public-links public-links-open' : 'public-links'}>
-          <NavLink to="/" end onClick={() => setMobileMenuOpen(false)}>Home</NavLink>
-          <NavLink to="/reports" onClick={() => setMobileMenuOpen(false)}>Explore Reports</NavLink>
-          <NavLink to="/map" onClick={() => setMobileMenuOpen(false)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <MapPin size={14} /> Live Map
-            </span>
-          </NavLink>
-          <NavLink to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <BarChart3 size={14} /> Impact Dashboard
-            </span>
-          </NavLink>
-          <NavLink to="/leaderboard" onClick={() => setMobileMenuOpen(false)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <Award size={14} /> Eco Leaderboard
-            </span>
-          </NavLink>
-          <NavLink to="/admin" onClick={() => setMobileMenuOpen(false)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <ShieldCheck size={14} /> Admin Desk
-            </span>
-          </NavLink>
+      {/* Center Links */}
+      <nav className={mobileMenuOpen ? 'public-links public-links-open' : 'public-links'}>
+        <NavLink to="/" end onClick={() => setMobileMenuOpen(false)}>Home</NavLink>
+        <NavLink to="/reports" onClick={() => setMobileMenuOpen(false)}>Reports</NavLink>
+        <NavLink to="/map" onClick={() => setMobileMenuOpen(false)}>City Map</NavLink>
+        <NavLink to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Analytics</NavLink>
+        <NavLink to="/leaderboard" onClick={() => setMobileMenuOpen(false)}>Leaderboard</NavLink>
 
-          {/* Mobile Report CTA */}
-          <Link className="button button-primary nav-cta" to="/report" onClick={() => setMobileMenuOpen(false)}>
-            <Plus size={17} /> Report Waste
-          </Link>
-        </nav>
+        {/* Dynamic Role Link */}
+        {user?.role === 'citizen' && (
+          <NavLink to="/citizen" onClick={() => setMobileMenuOpen(false)} style={{ color: '#0284c7' }}>
+            My Citizen Portal
+          </NavLink>
+        )}
+        {user?.role === 'worker' && (
+          <NavLink to="/worker" onClick={() => setMobileMenuOpen(false)} style={{ color: '#ea580c' }}>
+            Worker Desk
+          </NavLink>
+        )}
+        {user?.role === 'admin' && (
+          <NavLink to="/admin" onClick={() => setMobileMenuOpen(false)} style={{ color: '#16834a' }}>
+            Admin Desk
+          </NavLink>
+        )}
 
-        {/* Eco Points Pill */}
-        <Link 
-          to="/leaderboard" 
-          title="Your Citizen Eco Points"
+        <Link className="button button-primary nav-cta" to="/report" onClick={() => setMobileMenuOpen(false)}>
+          <Plus size={16} /> Report Waste
+        </Link>
+      </nav>
+
+      {/* Right Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* User Role Switcher Pill */}
+        <button
+          type="button"
+          onClick={() => setIsAuthModalOpen(true)}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             background: 'var(--soft)',
             border: '1px solid var(--line)',
             borderRadius: '100px',
-            padding: '6px 12px',
+            padding: '5px 12px',
             fontSize: '12px',
             fontWeight: '700',
-            color: 'var(--olive)',
-            textDecoration: 'none'
+            color: 'var(--ink)',
+            cursor: 'pointer'
+          }}
+          title="Switch User Role (Citizen / Worker / Admin)"
+        >
+          <span style={{
+            width: '22px',
+            height: '22px',
+            borderRadius: '50%',
+            background: user?.role === 'admin' ? '#16834a' : user?.role === 'worker' ? '#ea580c' : '#0284c7',
+            color: '#ffffff',
+            display: 'grid',
+            placeItems: 'center',
+            fontSize: '9px',
+            fontWeight: '800'
+          }}>
+            {user?.avatar || 'AQ'}
+          </span>
+          <span style={{ textTransform: 'capitalize' }}>
+            {user ? `${user.role}` : 'Login'}
+          </span>
+          <ChevronDown size={13} color="var(--muted)" />
+        </button>
+
+        {/* Eco points */}
+        <Link
+          to="/leaderboard"
+          title="Citizen Eco Points"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            background: 'var(--cream)',
+            border: '1px solid var(--line)',
+            borderRadius: '100px',
+            padding: '5px 10px',
+            fontSize: '12px',
+            fontWeight: '700',
+            color: 'var(--olive)'
           }}
         >
-          <span style={{ fontSize: '14px' }}>🌱</span>
-          <span>{ecoPoints} pts</span>
+          <span>🌱</span>
+          <span>{ecoPoints}</span>
         </Link>
 
-        {/* Notifications Popover */}
+        {/* Notifications */}
         <div style={{ position: 'relative' }}>
-          <button 
-            type="button" 
-            className="icon-button" 
+          <button
+            type="button"
+            className="icon-button"
             onClick={() => {
               setNotifDropdownOpen(!notifDropdownOpen);
-              if (unreadCount > 0 && onMarkNotificationsRead) {
-                onMarkNotificationsRead();
-              }
+              if (unreadCount > 0 && onMarkNotificationsRead) onMarkNotificationsRead();
             }}
-            aria-label="Notifications"
-            style={{ position: 'relative' }}
+            aria-label="Alerts"
+            style={{ width: '36px', height: '36px', position: 'relative' }}
           >
-            <Bell size={18} />
+            <Bell size={16} />
             {unreadCount > 0 && (
               <span style={{
                 position: 'absolute',
-                top: '5px',
-                right: '5px',
-                width: '8px',
-                height: '8px',
-                background: '#d9381e',
-                borderRadius: '50%',
-                boxShadow: '0 0 0 2px var(--surface)'
+                top: '6px',
+                right: '6px',
+                width: '7px',
+                height: '7px',
+                background: '#dc2626',
+                borderRadius: '50%'
               }} />
             )}
           </button>
@@ -126,35 +164,31 @@ export default function Navbar({
             <div style={{
               position: 'absolute',
               right: 0,
-              top: '46px',
-              width: '320px',
+              top: '44px',
+              width: '300px',
               background: 'var(--surface)',
               border: '1px solid var(--line)',
               borderRadius: '14px',
-              boxShadow: 'var(--shadow)',
+              boxShadow: 'var(--shadow-lg)',
               zIndex: 1000,
-              padding: '14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px'
+              padding: '14px'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '8px' }}>
-                <strong style={{ fontSize: '13px' }}>Civic Alerts & Updates</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '8px', marginBottom: '8px' }}>
+                <strong style={{ fontSize: '13px' }}>Civic Notifications</strong>
                 <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{notifications.length} alerts</span>
               </div>
-
-              <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {notifications.map((n) => (
                   <div key={n.id} style={{
-                    padding: '8px 10px',
+                    padding: '8px',
                     borderRadius: '8px',
                     background: n.unread ? 'var(--soft)' : 'transparent',
-                    fontSize: '11px',
-                    border: '1px solid var(--line)'
+                    border: '1px solid var(--line)',
+                    fontSize: '11px'
                   }}>
-                    <div style={{ fontWeight: '700', color: 'var(--ink)' }}>{n.title}</div>
-                    <div style={{ color: 'var(--muted)', marginTop: '2px', lineHeight: '1.4' }}>{n.text}</div>
-                    <div style={{ fontSize: '9px', color: 'var(--olive)', marginTop: '4px', fontWeight: '600' }}>{n.date}</div>
+                    <strong style={{ display: 'block', color: 'var(--ink)' }}>{n.title}</strong>
+                    <span style={{ color: 'var(--muted)', display: 'block', marginTop: '2px' }}>{n.text}</span>
+                    <span style={{ fontSize: '9px', color: 'var(--olive)', marginTop: '4px', display: 'block', fontWeight: '700' }}>{n.date}</span>
                   </div>
                 ))}
               </div>
@@ -162,29 +196,30 @@ export default function Navbar({
           )}
         </div>
 
-        {/* Dark / Light Mode Toggle */}
-        <button 
-          type="button" 
-          className="icon-button" 
-          onClick={onToggleTheme} 
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-          aria-label="Toggle Dark/Light Mode"
+        {/* Theme Toggle */}
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onToggleTheme}
+          style={{ width: '36px', height: '36px' }}
+          aria-label="Toggle Theme"
         >
-          {theme === 'dark' ? <Sun size={18} color="#e0a03b" /> : <Moon size={18} />}
+          {theme === 'dark' ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} />}
         </button>
 
-        {/* Desktop CTA */}
-        <Link className="button button-primary" to="/report" style={{ display: 'inline-flex' }}>
-          <Plus size={16} /> Report Issue
+        {/* Report Button */}
+        <Link className="button button-primary" to="/report" style={{ display: 'inline-flex', paddingInline: '14px', minHeight: '38px', fontSize: '13px' }}>
+          <Plus size={15} /> Report
         </Link>
 
-        {/* Mobile Hamburger */}
-        <button 
-          className="icon-button mobile-menu" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-          aria-label="Toggle navigation menu"
+        {/* Mobile Menu Button */}
+        <button
+          className="icon-button mobile-menu"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Menu"
+          style={{ width: '36px', height: '36px' }}
         >
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
     </header>

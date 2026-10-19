@@ -5,19 +5,19 @@ import {
   CheckCircle2, 
   Activity, 
   ClipboardList, 
-  Leaf, 
   UploadCloud, 
-  Clock, 
   Sparkles, 
   ShieldCheck, 
-  Zap, 
   Award,
-  Layers
+  Zap,
+  TrendingUp
 } from 'lucide-react';
 import ReportCard from '../components/ReportCard';
 import RealMap from '../components/RealMap';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home({ reports, onUpvote }) {
+  const { user, setIsAuthModalOpen } = useAuth();
   const resolved = reports.filter(r => r.status === 'Resolved').length;
   const activeCleanups = reports.filter(r => ['In Progress', 'Cleanup Scheduled'].includes(r.status)).length;
   const resolutionPercentage = reports.length ? Math.round((resolved / reports.length) * 100) : 0;
@@ -26,18 +26,18 @@ export default function Home({ reports, onUpvote }) {
 
   return (
     <div className="public-page">
-      {/* Hero Section */}
+      {/* Clean Modern Hero */}
       <section className="hero wrap">
         <div className="hero-copy">
           <div className="eyebrow">
-            <span className="eyebrow-dot" /> AI-POWERED CIVIC WASTE PLATFORM FOR HYDERABAD
+            <span className="eyebrow-dot" /> SMART CIVIC WASTE PLATFORM · HYDERABAD
           </div>
           <h1>
-            Let's make<br />
-            <em>Hyderabad cleaner.</em>
+            Let's Make<br />
+            <em>Hyderabad Cleaner.</em>
           </h1>
           <p>
-            Notice waste piling up in your neighborhood? Snap a photo, let our AI Vision categorize the urgency, and track live cleanup progress on our city GPS map.
+            Notice waste piling up or blocking roads in your neighborhood? Take a photo, let AI detect the waste category, and track verified municipal cleanups in real time.
           </p>
 
           <div className="hero-actions">
@@ -45,79 +45,92 @@ export default function Home({ reports, onUpvote }) {
               <Sparkles size={16} /> Report with AI Scanner <ArrowRight size={16} />
             </Link>
             <Link to="/map" className="button button-outline">
-              <MapPin size={16} /> View City GPS Map
+              <MapPin size={16} /> Open City GPS Map
             </Link>
-            <Link to="/dashboard" className="button button-ghost">
-              Civic Dashboard &rarr;
-            </Link>
+            <button
+              type="button"
+              className="button button-ghost"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Sign In / Switch Role &rarr;
+            </button>
           </div>
 
-          <div className="hero-proof">
-            <div className="proof-avatars">
-              <span>AQ</span>
-              <span>TM</span>
-              <span>FB</span>
-              <span>+</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '28px' }}>
+            <div style={{ display: 'flex' }}>
+              {['AQ', 'TM', 'RK', '+'].map((initials, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: idx === 0 ? '#0284c7' : idx === 1 ? '#ea580c' : idx === 2 ? '#16834a' : 'var(--soft)',
+                    color: idx < 3 ? '#ffffff' : 'var(--ink)',
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    border: '2px solid var(--surface)',
+                    marginLeft: idx > 0 ? '-8px' : 0
+                  }}
+                >
+                  {initials}
+                </div>
+              ))}
             </div>
             <div>
-              <strong>Community & SSWMB Powered</strong>
-              <small>Empowering citizens across Qasimabad, Latifabad & GOR Colony</small>
+              <strong style={{ fontSize: '13px', display: 'block', color: 'var(--ink)' }}>
+                Multi-Role Collaboration
+              </strong>
+              <small style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                Connecting Citizens, SSWMB Sanitation Workers & Municipal Admins
+              </small>
             </div>
           </div>
         </div>
 
-        {/* Hero Visual Card */}
+        {/* Clean Hero Visual Card */}
         <div className="hero-visual">
-          <div
-            className="hero-image"
-            role="img"
-            aria-label="Clean Hyderabad green pedestrian roadway"
-          />
+          <div className="hero-image" />
 
-          <div className="floating-card floating-top">
-            <span className="float-icon">
-              <Sparkles size={18} />
-            </span>
-            <div>
-              <strong>AI Waste Scanner</strong>
-              <small>Auto-detects category & severity</small>
+          {/* Clean Overlay Card */}
+          <div className="hero-card-overlay">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '10px',
+                background: '#dcfce7',
+                color: '#15803d',
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0
+              }}>
+                <TrendingUp size={22} />
+              </div>
+              <div>
+                <strong style={{ fontSize: '15px', color: 'var(--ink)', display: 'block' }}>
+                  {resolutionPercentage}% Resolved
+                </strong>
+                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
+                  {resolved} verified cleanups across Hyderabad
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="floating-card floating-bottom">
-            <div className="mini-progress">
-              <svg viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="17" />
-                <circle
-                  className="progress-ring"
-                  cx="22"
-                  cy="22"
-                  r="17"
-                  style={{ strokeDashoffset: Math.max(0, 107 - (107 * resolutionPercentage) / 100) }}
-                />
-              </svg>
-              <span>{resolutionPercentage}%</span>
-            </div>
-            <div>
-              <strong>Resolution Rate</strong>
-              <small>{resolved} verified cleanups</small>
-            </div>
-          </div>
-
-          <div className="hero-leaf leaf-one">
-            <Leaf size={22} />
-          </div>
-          <div className="hero-leaf leaf-two">
-            <Leaf size={16} />
+            <Link to="/dashboard" className="text-link" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+              Live Telemetry &rarr;
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Live Impact Stats Strip */}
+      {/* Impact Stats Strip */}
       <section className="impact-strip wrap">
         <div>
           <span className="impact-icon">
-            <ClipboardList size={22} />
+            <ClipboardList size={20} />
           </span>
           <div>
             <strong>{reports.length}</strong>
@@ -127,21 +140,21 @@ export default function Home({ reports, onUpvote }) {
 
         <div>
           <span className="impact-icon peach">
-            <Activity size={22} />
+            <Activity size={20} />
           </span>
           <div>
             <strong>{activeCleanups}</strong>
-            <span>Sanitation Crews on Site</span>
+            <span>Sanitation Squads on Site</span>
           </div>
         </div>
 
         <div>
           <span className="impact-icon olive">
-            <CheckCircle2 size={22} />
+            <CheckCircle2 size={20} />
           </span>
           <div>
             <strong>{resolved}</strong>
-            <span>Streets Fully Cleaned</span>
+            <span>Sites Fully Restored</span>
           </div>
         </div>
 
@@ -151,16 +164,16 @@ export default function Home({ reports, onUpvote }) {
         </div>
       </section>
 
-      {/* 3-Step Interactive Process */}
+      {/* 3-Step Process */}
       <section className="section wrap">
         <div className="section-head">
           <div>
-            <div className="eyebrow">SMART & ACCESSIBLE CIVIC TECH</div>
-            <h2>How CleanStreet Works</h2>
-            <p>From spotting an issue on your street to verified municipal resolution in 3 easy steps.</p>
+            <div className="eyebrow">HOW IT WORKS</div>
+            <h2>Simple, Transparent & Fast</h2>
+            <p>From flagging an issue on your street to verified municipal cleanup in 3 steps.</p>
           </div>
           <Link to="/about" className="text-link">
-            Learn More About Architecture &rarr;
+            System Architecture &rarr;
           </Link>
         </div>
 
@@ -170,9 +183,9 @@ export default function Home({ reports, onUpvote }) {
             <div className="step-icon">
               <UploadCloud size={24} />
             </div>
-            <h3>1. Snap & AI Classify</h3>
+            <h3>1. Snap & AI Triage</h3>
             <p>
-              Take a quick photo of the waste pile. Our neural vision scanner instantly detects the debris category and calculates the urgency score.
+              Upload a waste photo. The built-in AI scanner immediately estimates waste type, debris volume, and urgency level.
             </p>
           </div>
 
@@ -183,7 +196,7 @@ export default function Home({ reports, onUpvote }) {
             </div>
             <h3>2. Real-Time GPS Pinning</h3>
             <p>
-              Interactive OpenStreetMap pinpointing pinpoints the exact coordinates across Hyderabad so compactor trucks navigate directly to the site.
+              Pinpoint the exact Hyderabad street or landmark on OpenStreetMap so compactor trucks navigate directly to the site.
             </p>
           </div>
 
@@ -192,16 +205,16 @@ export default function Home({ reports, onUpvote }) {
             <div className="step-icon olive">
               <Award size={24} />
             </div>
-            <h3>3. Dispatch & Eco-Points</h3>
+            <h3>3. Dispatch & Verified Proof</h3>
             <p>
-              Municipal squads clear the site with photo proof. You earn Citizen Eco-Points and badges on the citywide leaderboard.
+              Field workers clean the location, submit after-cleanup verification photos, and you earn Citizen Eco-Points!
             </p>
           </div>
         </div>
       </section>
 
-      {/* Interactive Live City Map Preview */}
-      <section className="section wrap" style={{ paddingTop: '20px' }}>
+      {/* Live Map Preview */}
+      <section className="section wrap" style={{ paddingTop: '10px' }}>
         <div className="section-head">
           <div>
             <div className="eyebrow">GEOSPATIAL INTELLIGENCE</div>
@@ -209,7 +222,7 @@ export default function Home({ reports, onUpvote }) {
             <p>Real-time OpenStreetMap coordinates of reported and active waste hotspots.</p>
           </div>
           <Link to="/map" className="button button-outline">
-            Open Fullscreen City Map <ArrowRight size={15} />
+            Open Fullscreen Map <ArrowRight size={15} />
           </Link>
         </div>
 
@@ -218,14 +231,14 @@ export default function Home({ reports, onUpvote }) {
         </div>
       </section>
 
-      {/* Recent Incidents Section */}
+      {/* Recent Reports */}
       <section className="section recent-section">
         <div className="wrap">
           <div className="section-head">
             <div>
-              <div className="eyebrow">CITIZEN COLLABORATION</div>
-              <h2>Recent Community Reports</h2>
-              <p>Support urgent reports in your neighborhood with an endorsement upvote.</p>
+              <div className="eyebrow">RECENT ACTIVITY</div>
+              <h2>Community Reports from Hyderabad</h2>
+              <p>Explore recent incidents and support urgent issues with your citizen endorsement.</p>
             </div>
             <Link to="/reports" className="button button-outline">
               View All {reports.length} Reports <ArrowRight size={15} />
@@ -238,20 +251,6 @@ export default function Home({ reports, onUpvote }) {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Bottom CTA Banner */}
-      <section className="cta-band wrap">
-        <div className="cta-symbol">
-          <Leaf size={32} />
-        </div>
-        <div>
-          <h2>Your Neighborhood Deserves Cleaner Streets.</h2>
-          <p>Join fellow Hyderabad citizens in building a healthier, greener urban environment.</p>
-        </div>
-        <Link to="/report" className="button button-dark">
-          Report an Issue Now <ArrowRight size={16} />
-        </Link>
       </section>
     </div>
   );

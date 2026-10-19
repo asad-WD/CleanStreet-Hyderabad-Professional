@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { CircleHelp } from 'lucide-react';
 
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import AuthModal from './components/AuthModal';
 
 import Home from './pages/Home';
 import Reports from './pages/Reports';
@@ -13,6 +15,8 @@ import MapView from './pages/MapView';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
 import AdminDashboard from './pages/AdminDashboard';
+import WorkerPortal from './pages/WorkerPortal';
+import CitizenPortal from './pages/CitizenPortal';
 import About from './pages/About';
 
 import { 
@@ -40,7 +44,7 @@ function NotFound() {
   );
 }
 
-export default function App() {
+function MainAppContent() {
   const [reports, setReports] = useState(loadReports);
   const [theme, setTheme] = useState(getSavedTheme);
   const [ecoPoints, setEcoPoints] = useState(getEcoPoints);
@@ -75,7 +79,6 @@ export default function App() {
   const handleAddReport = (newReport) => {
     setReports(prev => [newReport, ...prev]);
 
-    // Add notification
     setNotifications(prev => [
       {
         id: `notif_${Date.now()}`,
@@ -97,7 +100,7 @@ export default function App() {
           const updatedUpvotes = wasUpvoted ? Math.max(0, (r.upvotes || 1) - 1) : (r.upvotes || 0) + 1;
           
           if (!wasUpvoted) {
-            handleAwardPoints(10); // Award 10 points for endorsing
+            handleAwardPoints(10);
           }
 
           return {
@@ -178,6 +181,9 @@ export default function App() {
         onMarkNotificationsRead={handleMarkNotificationsRead}
       />
 
+      {/* Role Login Modal */}
+      <AuthModal />
+
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<Home reports={reports} onUpvote={handleUpvote} />} />
@@ -207,6 +213,26 @@ export default function App() {
             path="/leaderboard" 
             element={<Leaderboard ecoPoints={ecoPoints} reports={reports} />} 
           />
+          {/* Individual Portals */}
+          <Route 
+            path="/citizen" 
+            element={
+              <CitizenPortal 
+                reports={reports} 
+                ecoPoints={ecoPoints} 
+                onUpvote={handleUpvote} 
+              />
+            } 
+          />
+          <Route 
+            path="/worker" 
+            element={
+              <WorkerPortal 
+                reports={reports} 
+                onUpdateReport={handleUpdateReport} 
+              />
+            } 
+          />
           <Route 
             path="/admin" 
             element={
@@ -225,5 +251,13 @@ export default function App() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainAppContent />
+    </AuthProvider>
   );
 }
