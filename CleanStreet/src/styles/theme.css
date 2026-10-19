@@ -37,3 +37,116 @@
 .icon-button{color:var(--olive);}
 @media(max-width:900px){.public-nav .public-links{top:100%;left:18px;right:18px;width:auto;max-width:none;}}
 @media(max-width:620px){.public-nav .brand{max-width:calc(100% - 54px);}.brand-logo{width:43px;height:43px}.brand-wordmark{font-size:16px}.brand small{font-size:7px}.public-nav .public-links{left:12px;right:12px;}}
+
+/* ========================================================
+   ADVANCED CIVIC TECH UPGRADES: Dark Mode & Leaflet Custom
+   ======================================================== */
+[data-theme="dark"] {
+  --terracotta: #38bdf8;
+  --olive: #22c55e;
+  --sage: #86efac;
+  --cream: #14231b;
+  --ink: #f1f5f3;
+  --muted: #94a39b;
+  --line: #24352b;
+  --surface: #131d17;
+  --canvas: #0c130f;
+  --soft: #17241d;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] .public-nav {
+  background: rgba(19, 29, 23, 0.92);
+  border-bottom: 1px solid rgba(36, 53, 43, 0.8);
+}
+
+[data-theme="dark"] .form-card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .report-card,
+[data-theme="dark"] .side-info-card,
+[data-theme="dark"] .details-main,
+[data-theme="dark"] .filter-panel,
+[data-theme="dark"] .step-card,
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .about-grid article,
+[data-theme="dark"] .limitation-note,
+[data-theme="dark"] .floating-card {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field select,
+[data-theme="dark"] .field textarea,
+[data-theme="dark"] .search-box,
+[data-theme="dark"] .filters-row select,
+[data-theme="dark"] .table-select {
+  background: #17241d;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .search-box input {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .upload-zone {
+  background: #17241d;
+  border-color: var(--line);
+}
+
+[data-theme="dark"] .table-scroll td {
+  border-bottom-color: var(--line);
+  color: var(--muted);
+}
+
+[data-theme="dark"] .table-report strong {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .report-title {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .recent-section {
+  background: #0f1612;
+}
+
+[data-theme="dark"] .hero-copy>p {
+  color: var(--muted);
+}
+
+[data-theme="dark"] .hero h1 {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .cta-band {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .cta-symbol {
+  background: var(--surface);
+}
+
+/* Custom Marker CSS */
+.custom-leaflet-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-picker-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-card-popup {
+  color: #202d28;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

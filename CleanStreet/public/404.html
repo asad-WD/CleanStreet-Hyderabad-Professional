@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CleanStreet Hyderabad</title>
+    <script>
+      const pathname = window.location.pathname;
+      const segments = pathname.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        const repo = segments[0];
+        const route = segments.slice(1).join('/');
+        window.location.replace('/' + repo + '/#/' + route + window.location.search);
+      } else {
+        window.location.replace('/#' + pathname + window.location.search);
+      }
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to CleanStreet...</p>
+  </body>
+</html>

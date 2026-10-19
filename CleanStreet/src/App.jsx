@@ -1,129 +1,229 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, ClipboardList, Clock3, Filter, House, Leaf, ListFilter, MapPin, Menu, Plus, Recycle, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, Trash2, TrendingUp, UploadCloud, X } from 'lucide-react';
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { initialReports } from './data/initialReports';
-import { loadReports, saveReports, resetReports } from './services/storage';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { CircleHelp } from 'lucide-react';
 
-const COLORS = ['#827148', '#A5AF79', '#E8A07C', '#C7BDA7', '#655638', '#D7C9B5'];
-const navItems = [{to:'/',label:'Home',icon:House},{to:'/reports',label:'Explore reports',icon:ClipboardList},{to:'/report',label:'Report an issue',icon:Plus},{to:'/dashboard',label:'Impact dashboard',icon:BarChart3},{to:'/map',label:'Location map',icon:MapPin},{to:'/about',label:'About CleanStreet',icon:CircleHelp}];
-const statusClass = s => s.toLowerCase().replaceAll(' ', '-');
-function Brand({light=false}) { return <Link to="/" className={`brand ${light?'brand-light':''}`} aria-label="CleanStreet home"><img className="brand-logo" src="/cleanstreet-logo.png" alt="Clean Streets logo"/><span className="brand-wordmark">Clean<span>Street</span><small>Cleaner Streets. Stronger Communities.</small></span></Link>; }
-function Badge({children,type='status'}) { return <span className={`badge ${type}-${statusClass(children)}`}>{children}</span>; }
-function Shell({children}) { return <div className="public-page"><PublicNav/>{children}<PublicFooter/></div>; }
-function PublicNav(){const [open,setOpen]=useState(false);return <header className="public-nav wrap"><Brand/><button className="icon-button mobile-menu" onClick={()=>setOpen(!open)} aria-label="Toggle navigation">{open?<X/>:<Menu/>}</button><nav className={open?'public-links public-links-open':'public-links'}><NavLink to="/" end>Home</NavLink><NavLink to="/reports">Explore reports</NavLink><NavLink to="/dashboard">Impact dashboard</NavLink><NavLink to="/map">Locations</NavLink><NavLink to="/about">About</NavLink><Link className="button button-primary nav-cta" to="/report"><Plus size={17}/> Report an issue</Link></nav></header>}
-function PageHead({eyebrow,title,description,actions}){return <div className="page-head"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1>{description&&<p>{description}</p>}</div>{actions&&<div className="head-actions">{actions}</div>}</div>}
-function StatCard({label,value,sub,icon:Icon,tone='sage',trend}){return <article className="stat-card"><div className="stat-top"><span>{label}</span><span className={`stat-icon ${tone}`}><Icon size={20}/></span></div><div className="stat-value">{value}</div><div className="stat-bottom"><span>{sub}</span>{trend&&<span className="trend"><ArrowUpRight size={14}/>{trend}</span>}</div></article>}
-function ReportCard({report,compact=false}){const navigate=useNavigate();const openReport=event=>{if(event.target.closest('a,button'))return;navigate(`/reports/${encodeURIComponent(String(report.id))}`)};return <article onClick={openReport} onKeyDown={event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();navigate(`/reports/${encodeURIComponent(String(report.id))}`)}}} tabIndex={0} role="link" aria-label={`Open report details: ${report.title}`} className={`report-card ${compact?'report-card-compact':''}`}><Link to={`/reports/${encodeURIComponent(String(report.id))}`} className="report-image" aria-label={`View ${report.title}`} style={{backgroundImage:report.image?`url(${report.image})`:undefined}}>{!report.image&&<div className="image-placeholder"><Recycle size={34}/><span>COMMUNITY REPORT</span></div>}<span className="image-id">{report.id}</span></Link><div className="report-card-body"><div className="report-card-tags"><Badge type="urgency">{report.urgency}</Badge><Badge>{report.status}</Badge></div><Link to={`/reports/${encodeURIComponent(String(report.id))}`} className="report-title">{report.title}</Link><div className="report-location"><MapPin size={15}/>{report.area} · {report.landmark}</div><div className="report-card-footer"><span>{new Date(report.date+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'})}</span><Link to={`/reports/${encodeURIComponent(String(report.id))}`} className="text-link">View details <ArrowRight size={14}/></Link></div></div></article>}
-function Home({reports}){const resolved=reports.filter(r=>r.status==='Resolved').length;return <div className="public-page"><PublicNav/><section className="hero wrap"><div className="hero-copy"><div className="eyebrow"><span className="eyebrow-dot"/> A cleaner tomorrow starts here</div><h1>Let's make our<br/><em>streets cleaner.</em></h1><p>Notice waste piling up in your neighborhood? Report it, follow its progress, and help make your community a healthier place to live.</p><div className="hero-actions"><Link to="/report" className="button button-primary">Report an issue <ArrowRight size={17}/></Link><Link to="/reports" className="button button-outline">Explore reports</Link></div><div className="hero-proof"><div className="proof-avatars"><span>AM</span><span>SK</span><span>JR</span><span>+</span></div><div><strong>Community powered</strong><small>Every voice makes a difference</small></div></div></div><div className="hero-visual"><div className="hero-image" role="img" aria-label="Green neighborhood park with clean pedestrian paths"/><div className="floating-card floating-top"><span className="float-icon"><CheckCircle2 size={18}/></span><div><strong>Cleaner spaces</strong><small>One report at a time</small></div></div><div className="floating-card floating-bottom"><div className="mini-progress"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17"/><circle className="progress-ring" cx="22" cy="22" r="17"/></svg><span>{reports.length?Math.round(resolved/reports.length*100):0}%</span></div><div><strong>Resolution rate</strong><small>Across demo reports</small></div></div><div className="hero-leaf leaf-one"><Leaf/></div><div className="hero-leaf leaf-two"><Leaf/></div></div></section><section className="impact-strip wrap"><div><span className="impact-icon"><ClipboardList size={20}/></span><div><strong>{reports.length}</strong><span>Community reports</span></div></div><div><span className="impact-icon peach"><Activity size={20}/></span><div><strong>{reports.filter(r=>r.status==='In Progress'||r.status==='Cleanup Scheduled').length}</strong><span>Cleanups underway</span></div></div><div><span className="impact-icon olive"><CheckCircle2 size={20}/></span><div><strong>{resolved}</strong><span>Reports resolved</span></div></div><div className="impact-note">A little care goes a long way. <Leaf size={16}/></div></section><section className="section wrap"><div className="section-head"><div><div className="eyebrow">Simple by design</div><h2>Better streets, together.</h2><p>Making your neighborhood cleaner takes just a few steps.</p></div><Link to="/about" className="text-link">How it works <ArrowRight size={16}/></Link></div><div className="steps-grid"><div className="step-card"><span className="step-number">01</span><div className="step-icon"><UploadCloud/></div><h3>Spot & report</h3><p>See a waste issue? Share the details and add a photo to help others understand the problem.</p></div><div className="step-card"><span className="step-number">02</span><div className="step-icon peach"><Clock3/></div><h3>Follow progress</h3><p>Check the report status and see how an issue moves from reported to resolved.</p></div><div className="step-card"><span className="step-number">03</span><div className="step-icon olive"><Sparkles/></div><h3>See the impact</h3><p>Explore community activity and celebrate the small changes that add up.</p></div></div></section><section className="section recent-section"><div className="wrap"><div className="section-head"><div><div className="eyebrow">From the community</div><h2>Recent reports</h2><p>A snapshot of issues shared in our demo neighborhoods.</p></div><Link to="/reports" className="button button-outline">View all reports <ArrowRight size={16}/></Link></div><div className="report-grid">{reports.slice(0,3).map(r=><ReportCard key={r.id} report={r}/>)}</div></div></section><section className="cta-band wrap"><div className="cta-symbol"><Leaf size={30}/></div><div><h2>Your neighborhood deserves better.</h2><p>Help bring attention to the places that need a little care.</p></div><Link to="/report" className="button button-dark">Make a report <ArrowRight size={16}/></Link></section><PublicFooter/></div>}
-function PublicFooter(){return <footer className="public-footer"><div className="wrap footer-main"><div><Brand/><p>Helping communities notice, report, and track waste issues — one street at a time.</p></div><div><strong>Explore</strong><Link to="/reports">Community reports</Link><Link to="/dashboard">Impact dashboard</Link><Link to="/map">Report map</Link></div><div><strong>Get involved</strong><Link to="/report">Report an issue</Link><Link to="/about">How it works</Link><Link to="/admin">Demo administration</Link></div><div className="footer-disclaimer"><span className="demo-pill"><span/> Prototype only</span><p>CleanStreet uses simulated data for demonstration. Reports are not sent to a real municipal service.</p></div></div><div className="wrap footer-bottom"><span>© 2026 CleanStreet</span><span>Cleaner Streets. Stronger Communities.</span></div></footer>}
-function ReportIssue({ addReport }) {
-  const nav = useNavigate();
-  const emptyForm = () => ({
-    title: '', category: 'Overflowing garbage bin', description: '', area: '',
-    landmark: '', date: new Date().toISOString().slice(0, 10), urgency: 'Medium'
-  });
-  const [form, setForm] = useState(emptyForm);
-  const [image, setImage] = useState('');
-  const [drag, setDrag] = useState(false);
-  const [error, setError] = useState('');
-  const [done, setDone] = useState('');
-  const [busy, setBusy] = useState(false);
-  const update = (key, value) => setForm(current => ({ ...current, [key]: value }));
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
-  function filePick(file) {
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file such as JPG, PNG, or WebP.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Please choose an image smaller than 5 MB.');
-      return;
-    }
-    setError('');
-    const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result || ''));
-    reader.readAsDataURL(file);
-  }
+import Home from './pages/Home';
+import Reports from './pages/Reports';
+import ReportDetails from './pages/ReportDetails';
+import ReportIssue from './pages/ReportIssue';
+import MapView from './pages/MapView';
+import Dashboard from './pages/Dashboard';
+import Leaderboard from './pages/Leaderboard';
+import AdminDashboard from './pages/AdminDashboard';
+import About from './pages/About';
 
-  function submit(event) {
-    event.preventDefault();
-    if (!form.title.trim() || !form.description.trim() || !form.area.trim() || !form.landmark.trim()) {
-      setError('Please complete all required fields before submitting.');
-      return;
-    }
-    setBusy(true);
-    const id = `CS-${Date.now().toString().slice(-6)}`;
-    const report = {
-      ...form, id, title: form.title.trim(), description: form.description.trim(),
-      area: form.area.trim(), landmark: form.landmark.trim(), image, status: 'Reported',
-      createdAt: Date.now(),
-      history: [{ status: 'Reported', date: new Date().toISOString(), note: 'Created in local demonstration' }],
-      lat: 24.86, lng: 67.01
-    };
-    addReport(report);
-    setBusy(false);
-    setDone(id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+import { 
+  loadReports, 
+  saveReports, 
+  resetReports, 
+  getSavedTheme, 
+  saveTheme, 
+  getEcoPoints, 
+  addEcoPoints,
+  getNotifications,
+  saveNotifications
+} from './services/storage';
 
+function NotFound() {
   return (
-    <Shell>
-      <div className="content-page narrow-page">
-        <PageHead eyebrow="MAKE A DIFFERENCE" title="Report a waste issue" description="Tell us what you noticed. Your report will be saved locally in this demo." />
-        <div className="notice"><ShieldCheck size={19} /><span><strong>Demo mode:</strong> this form does not contact a municipality. Your report is saved in this browser only.</span></div>
-        {done ? (
-          <div className="success-panel">
-            <span className="success-icon"><CheckCircle2 size={34} /></span>
-            <h2>Report added successfully!</h2>
-            <p>Your demo report ID is <strong>{done}</strong>. It is now available in Explore Reports and the dashboard.</p>
-            <div className="form-actions centered">
-              <Link className="button button-primary" to={`/reports/${done}`}>View report <ArrowRight size={16} /></Link>
-              <button className="button button-outline" onClick={() => { setDone(''); setForm(emptyForm()); setImage(''); setError(''); }}>Create another</button>
-            </div>
-          </div>
-        ) : (
-          <form className="form-card" onSubmit={submit}>
-            <div className="form-section-title"><span>01</span><div><h2>Issue details</h2><p>Describe the waste problem clearly.</p></div></div>
-            {error && <div className="form-error"><AlertTriangle size={17} />{error}</div>}
-            <div className="form-grid">
-              <label className="field full"><span>Issue title <b>*</b></span><input required value={form.title} onChange={event => update('title', event.target.value)} placeholder="e.g. Overflowing bin near the park" maxLength={90} /></label>
-              <label className="field"><span>Waste category <b>*</b></span><select value={form.category} onChange={event => update('category', event.target.value)}>{['Overflowing garbage bin', 'Illegal dumping', 'Uncollected household waste', 'Construction debris', 'Street litter', 'Commercial waste', 'Other'].map(item => <option key={item}>{item}</option>)}</select></label>
-              <label className="field"><span>Urgency level <b>*</b></span><select value={form.urgency} onChange={event => update('urgency', event.target.value)}>{['Low', 'Medium', 'High'].map(item => <option key={item}>{item}</option>)}</select></label>
-              <label className="field full"><span>Description <b>*</b></span><textarea required value={form.description} onChange={event => update('description', event.target.value)} placeholder="What did you notice? Add any useful details..." rows={4} maxLength={700} /><small>{form.description.length}/700 characters</small></label>
-            </div>
-            <div className="form-section-title second"><span>02</span><div><h2>Where did it happen?</h2><p>A neighborhood and landmark help identify the area.</p></div></div>
-            <div className="form-grid">
-              <label className="field"><span>Neighborhood <b>*</b></span><input required value={form.area} onChange={event => update('area', event.target.value)} placeholder="e.g. GOR Colony, Hyderabad" /></label>
-              <label className="field"><span>Street or landmark <b>*</b></span><input required value={form.landmark} onChange={event => update('landmark', event.target.value)} placeholder="e.g. House No. 12, Block B, GOR Colony" /></label>
-              <label className="field"><span>Date observed</span><input type="date" value={form.date} onChange={event => update('date', event.target.value)} max={new Date().toISOString().slice(0, 10)} /></label>
-            </div>
-            <div className="form-section-title second"><span>03</span><div><h2>Add a photo <small>Optional</small></h2><p>A photo can help communicate the issue.</p></div></div>
-            <div className={`upload-zone ${drag ? 'drag-active' : ''}`} onDragOver={event => { event.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={event => { event.preventDefault(); setDrag(false); filePick(event.dataTransfer.files?.[0]); }}>
-              {image ? (
-                <div className="upload-preview"><img src={image} alt="Selected report preview" /><div><strong>Image ready to attach</strong><span>Preview of your selected image</span><button type="button" className="text-danger" onClick={() => setImage('')}><Trash2 size={15} /> Remove image</button></div></div>
-              ) : (
-                <>
-                  <span className="upload-icon"><UploadCloud size={25} /></span>
-                  <strong>Drag and drop an image here</strong>
-                  <span>JPG, PNG or WebP · up to 5 MB</span>
-                  <label className="button button-outline browse-button">Browse files<input type="file" accept="image/*" onChange={event => filePick(event.target.files?.[0])} hidden /></label>
-                </>
-              )}
-            </div>
-            <div className="form-actions"><button type="button" className="button button-ghost" onClick={() => nav(-1)}>Cancel</button><button type="submit" className="button button-primary" disabled={busy}>{busy ? 'Saving...' : 'Submit report'} <ArrowRight size={16} /></button></div>
-          </form>
-        )}
+    <div className="content-page">
+      <div className="empty-state">
+        <CircleHelp size={40} color="var(--terracotta)" />
+        <h2>404 - Page Not Found</h2>
+        <p>The page you are looking for does not exist or has moved.</p>
+        <Link to="/" className="button button-primary">Return Home</Link>
       </div>
-    </Shell>
+    </div>
   );
 }
-function Reports({reports}){const [search,setSearch]=useState('');const [cat,setCat]=useState('All categories');const [status,setStatus]=useState('All statuses');const [urgency,setUrgency]=useState('All urgency');const [sort,setSort]=useState('newest');const [view,setView]=useState('grid');const filtered=useMemo(()=>reports.filter(r=>`${r.title} ${r.id} ${r.area} ${r.description}`.toLowerCase().includes(search.toLowerCase())&&(cat==='All categories'||r.category===cat)&&(status==='All statuses'||r.status===status)&&(urgency==='All urgency'||r.urgency===urgency)).sort((a,b)=>sort==='newest'?(Number(b.createdAt)||0)-(Number(a.createdAt)||0):(Number(a.createdAt)||0)-(Number(b.createdAt)||0)),[reports,search,cat,status,urgency,sort]);const reset=()=>{setSearch('');setCat('All categories');setStatus('All statuses');setUrgency('All urgency');setSort('newest')};return <Shell><div className="content-page"><PageHead eyebrow="COMMUNITY REPORTS" title="Explore reports" description="Browse sample reports from Hyderabad neighborhoods and follow each issue’s progress." actions={<Link to="/report" className="button button-primary"><Plus size={17}/> New report</Link>}/><div className="notice"><ShieldCheck size={18}/><span>These are sample and locally submitted demo reports, not verified municipal records.</span></div><div className="filter-panel"><div className="search-box"><Search size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search title, ID, area or description..." aria-label="Search reports"/>{search&&<button onClick={()=>setSearch('')} aria-label="Clear search"><X size={15}/></button>}</div><div className="filters-row"><label><span>Category</span><select value={cat} onChange={e=>setCat(e.target.value)}><option>All categories</option>{[...new Set(reports.map(r=>r.category))].map(x=><option key={x}>{x}</option>)}</select></label><label><span>Status</span><select value={status} onChange={e=>setStatus(e.target.value)}><option>All statuses</option>{['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'].map(x=><option key={x}>{x}</option>)}</select></label><label><span>Urgency</span><select value={urgency} onChange={e=>setUrgency(e.target.value)}><option>All urgency</option>{['Low','Medium','High'].map(x=><option key={x}>{x}</option>)}</select></label><label><span>Sort by</span><select value={sort} onChange={e=>setSort(e.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label><button className="button button-ghost reset-button" onClick={reset}><RotateCcw size={15}/> Reset</button></div></div><div className="results-toolbar"><span><strong>{filtered.length}</strong> {filtered.length===1?'report':'reports'} found</span><div className="view-toggle"><button className={view==='grid'?'selected':''} onClick={()=>setView('grid')} aria-label="Grid view"><SlidersHorizontal size={16}/></button><button className={view==='list'?'selected':''} onClick={()=>setView('list')} aria-label="List view"><ListFilter size={16}/></button></div></div>{filtered.length?<div className={view==='grid'?'report-grid':'report-list'}>{filtered.map(r=><ReportCard key={r.id} report={r} compact={view==='list'}/>)}</div>:<div className="empty-state"><span><Search size={25}/></span><h3>No matching reports</h3><p>Try changing your search or resetting the filters.</p><button className="button button-outline" onClick={reset}>Reset filters</button></div>}</div></Shell>}
-function ReportDetails({reports,updateReport}){const {id}=useParams();let decodedId=id||'';try{decodedId=decodeURIComponent(decodedId)}catch{}const r=reports.find(x=>String(x.id)===String(decodedId));if(!r)return <Shell><div className="content-page"><div className="empty-state"><span><CircleHelp/></span><h2>Report not found</h2><p>This report may have been removed or the ID is incorrect.</p><Link to="/reports" className="button button-primary">Back to reports</Link></div></div></Shell>;const timeline=['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'];const current=timeline.indexOf(r.status);return <Shell><div className="content-page"><Link to="/reports" className="back-link"><ChevronLeft size={17}/> Back to reports</Link><div className="details-layout"><div className="details-main"><div className="details-hero" style={r.image?{backgroundImage:`url(${r.image})`}:{}}>{!r.image&&<div className="image-placeholder"><Recycle size={48}/><span>COMMUNITY REPORT</span></div>}<span className="image-id">{r.id}</span></div><div className="details-title-row"><div><div className="report-card-tags"><Badge type="urgency">{r.urgency} urgency</Badge><Badge>{r.status}</Badge></div><h1>{r.title}</h1><div className="report-location"><MapPin size={16}/>{r.area} · {r.landmark}</div></div></div><section className="detail-section"><h2>About this issue</h2><p>{r.description}</p><div className="detail-meta"><div><span>Category</span><strong>{r.category}</strong></div><div><span>Date observed</span><strong>{new Date(r.date+'T12:00:00').toLocaleDateString('en',{month:'long',day:'numeric',year:'numeric'})}</strong></div><div><span>Report ID</span><strong>{r.id}</strong></div></div></section><section className="detail-section"><h2>Progress timeline</h2><p className="muted">Illustrative workflow status for this local demo report.</p><div className="timeline">{timeline.map((s,i)=><div key={s} className={`timeline-step ${i<=current?'complete':''} ${i===current?'current':''}`}><span className="timeline-dot">{i<current?<Check size={13}/>:i+1}</span><div><strong>{s}</strong><small>{i<current?'Previous stage':i===current?'Current status':'Upcoming stage'}</small></div></div>)}</div></section></div><aside className="details-side"><div className="side-info-card"><h3>Report status</h3><Badge>{r.status}</Badge><p>Status reflects the current demo workflow and may be changed in the demo administration area.</p><Link to="/admin" className="button button-outline button-full">Open demo administration <ArrowRight size={15}/></Link></div><div className="side-info-card"><h3><MapPin size={17}/> Report location</h3><div className="location-preview"><MapPin size={25}/><span>Hyderabad demo location</span></div><strong>{r.area}</strong><p>{r.landmark}</p><small>Sample coordinates only · not a verified address</small><Link to="/map" className="text-link">Explore location view <ArrowRight size={14}/></Link></div></aside></div><div className="section-head related-head"><div><h2>More community reports</h2><p>Other sample reports from nearby demo areas.</p></div><Link to="/reports" className="text-link">All reports <ArrowRight size={15}/></Link></div><div className="report-grid">{reports.filter(x=>x.id!==r.id).slice(0,3).map(x=><ReportCard key={x.id} report={x}/>)}</div></div></Shell>}
-function Dashboard({reports}){const total=reports.length,pending=reports.filter(r=>['Reported','Under Review'].includes(r.status)).length,active=reports.filter(r=>['Cleanup Scheduled','In Progress'].includes(r.status)).length,resolved=reports.filter(r=>r.status==='Resolved').length,rate=total?Math.round(resolved/total*100):0;const months=useMemo(()=>{const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names.map((name,i)=>({month:name,reports:reports.filter(r=>new Date(r.date).getMonth()===i).length})).slice(Math.max(0,new Date().getMonth()-5),new Date().getMonth()+1)},[reports]);const categories=Object.entries(reports.reduce((a,r)=>(a[r.category]=(a[r.category]||0)+1,a),{})).map(([name,value])=>({name:name.replace(' garbage bin',' bin'),value}));const statusData=['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'].map(name=>({name,value:reports.filter(r=>r.status===name).length}));const areas=Object.entries(reports.reduce((a,r)=>(a[r.area]=(a[r.area]||0)+1,a),{})).map(([name,reports])=>({name,reports})).sort((a,b)=>b.reports-a.reports).slice(0,5);return <Shell><div className="content-page dashboard-page"><PageHead eyebrow="COMMUNITY OVERVIEW" title="Impact dashboard" description="A clearer view of waste reports and community cleanup progress." actions={<Link to="/report" className="button button-primary"><Plus size={17}/> Create report</Link>}/><div className="notice"><ShieldCheck size={18}/><span>Demonstration dashboard · Metrics and charts are calculated from this browser's local report dataset.</span></div><div className="stats-grid"><StatCard label="Total reports" value={total} sub="All demo incidents" icon={ClipboardList} tone="olive" trend="Live count"/><StatCard label="Needs attention" value={pending} sub="Reported or under review" icon={AlertTriangle} tone="peach"/><StatCard label="Cleanup underway" value={active} sub="Scheduled or in progress" icon={Activity} tone="sage"/><StatCard label="Resolved reports" value={resolved} sub="Marked as resolved" icon={CheckCircle2} tone="dark"/><StatCard label="Resolution rate" value={`${rate}%`} sub="Resolved / total reports" icon={TrendingUp} tone="olive"/></div><div className="charts-grid"><section className="panel chart-panel chart-wide"><div className="panel-heading"><div><h2>Report activity</h2><p>Report counts by month in the current dataset</p></div><span className="chart-key"><i/> Reports</span></div><div className="chart-area"><ResponsiveContainer width="100%" height="100%"><AreaChart data={months} margin={{top:8,right:8,left:-18,bottom:0}}><defs><linearGradient id="reportFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A5AF79" stopOpacity={0.45}/><stop offset="95%" stopColor="#A5AF79" stopOpacity={0.02}/></linearGradient></defs><CartesianGrid strokeDasharray="3 4" vertical={false} stroke="#eee8dc"/><XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill:'#8e897d',fontSize:12}}/><YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fill:'#8e897d',fontSize:12}}/><Tooltip contentStyle={{borderRadius:12,border:'1px solid #eee8dc',fontFamily:'Inter'}}/><Area type="monotone" dataKey="reports" stroke="#827148" strokeWidth={2.5} fill="url(#reportFill)" activeDot={{r:5,fill:'#E8A07C',stroke:'#fff',strokeWidth:2}}/></AreaChart></ResponsiveContainer></div></section><section className="panel chart-panel"><div className="panel-heading"><div><h2>By category</h2><p>Issue types reported</p></div><span className="subtle-icon"><BarChart3 size={17}/></span></div><div className="donut-wrap"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categories} dataKey="value" nameKey="name" innerRadius="58%" outerRadius="82%" paddingAngle={3} stroke="none">{categories.map((c,i)=><Cell key={c.name} fill={COLORS[i%COLORS.length]}/>)}</Pie><Tooltip contentStyle={{borderRadius:12,border:'1px solid #eee8dc'}}/></PieChart></ResponsiveContainer><div className="donut-center"><strong>{total}</strong><span>reports</span></div></div><div className="legend-list">{categories.slice(0,4).map((c,i)=><div key={c.name}><span><i style={{background:COLORS[i%COLORS.length]}}/>{c.name}</span><strong>{c.value}</strong></div>)}</div></section><section className="panel chart-panel"><div className="panel-heading"><div><h2>Current status</h2><p>Where reports stand today</p></div></div><div className="status-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={statusData} layout="vertical" margin={{top:0,right:8,left:4,bottom:0}}><XAxis type="number" allowDecimals={false} hide/><YAxis type="category" dataKey="name" width={118} axisLine={false} tickLine={false} tick={{fill:'#69665e',fontSize:11}}/><Tooltip cursor={{fill:'#f8f3e9'}} contentStyle={{borderRadius:12,border:'1px solid #eee8dc'}}/><Bar dataKey="value" radius={[0,5,5,0]} barSize={13}>{statusData.map((d,i)=><Cell key={d.name} fill={['#E8A07C','#C7BDA7','#A5AF79','#827148','#6C7950'][i]}/>)}</Bar></BarChart></ResponsiveContainer></div></section><section className="panel chart-panel"><div className="panel-heading"><div><h2>Neighborhood overview</h2><p>Reports by demo area</p></div><MapPin size={18} className="muted"/></div><div className="neighborhood-list">{areas.map((a,i)=><div className="neighborhood-row" key={a.name}><span className="neighborhood-number">0{i+1}</span><div className="neighborhood-name"><strong>{a.name}</strong><div className="tiny-progress"><span style={{width:`${Math.max(8,a.reports/Math.max(1,...areas.map(x=>x.reports))*100)}%`}}/></div></div><b>{a.reports}</b></div>)}</div><Link to="/map" className="panel-link">View location overview <ArrowRight size={15}/></Link></section></div><section className="panel recent-table-panel"><div className="panel-heading"><div><h2>Recent community reports</h2><p>Latest activity across the demo dataset</p></div><Link to="/reports" className="text-link">View all <ArrowRight size={14}/></Link></div><div className="table-scroll"><table><thead><tr><th>Report</th><th>Neighborhood</th><th>Date</th><th>Urgency</th><th>Status</th><th></th></tr></thead><tbody>{[...reports].sort((a,b)=>b.createdAt-a.createdAt).slice(0,6).map(r=><tr key={r.id}><td><div className="table-report"><span className="table-thumb"><Recycle size={17}/></span><span><strong>{r.title}</strong><small>{r.id}</small></span></div></td><td>{r.area}</td><td>{new Date(r.date+'T12:00:00').toLocaleDateString('en',{month:'short',day:'numeric'})}</td><td><Badge type="urgency">{r.urgency}</Badge></td><td><Badge>{r.status}</Badge></td><td><Link to={`/reports/${encodeURIComponent(String(r.id))}`} className="icon-button table-action" aria-label={`Open ${r.id}`}><ArrowRight size={16}/></Link></td></tr>)}</tbody></table></div></section></div></Shell>}
-function MapView({reports}){const [status,setStatus]=useState('All statuses');const [cat,setCat]=useState('All categories');const filtered=reports.filter(r=>(status==='All statuses'||r.status===status)&&(cat==='All categories'||r.category===cat));return <Shell><div className="content-page"><PageHead eyebrow="LOCATION EXPLORER" title="Community location map" description="Explore sample waste reports across Hyderabad neighborhoods."/><div className="notice"><MapPin size={18}/><span>Locations are illustrative only. They do not represent verified addresses or actual municipal incidents.</span></div><div className="filter-panel map-filters"><label><span>Filter by status</span><select value={status} onChange={e=>setStatus(e.target.value)}><option>All statuses</option>{['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'].map(s=><option key={s}>{s}</option>)}</select></label><label><span>Filter by category</span><select value={cat} onChange={e=>setCat(e.target.value)}><option>All categories</option>{[...new Set(reports.map(r=>r.category))].map(s=><option key={s}>{s}</option>)}</select></label><span className="map-count">{filtered.length} locations</span></div><div className="map-layout"><div className="map-canvas"><div className="map-pattern"><div className="map-road road-a"/><div className="map-road road-b"/><div className="map-road road-c"/><div className="map-park park-a"><Leaf size={25}/><span>COMMUNITY PARK</span></div><div className="map-park park-b"><Leaf size={20}/></div>{filtered.slice(0,14).map((r,i)=><Link key={r.id} to={`/reports/${encodeURIComponent(String(r.id))}`} className={`map-pin pin-${i%14}`} title={`${r.title} — ${r.status}`}><MapPin size={24}/><span>{i+1}</span></Link>)}<div className="map-attribution">Illustrative neighborhood view · CleanStreet demo</div></div></div><div className="map-list-panel"><div className="panel-heading"><div><h2>Reported locations</h2><p>Select a report to view its details.</p></div></div><div className="map-report-list">{filtered.map((r,i)=><Link key={r.id} to={`/reports/${encodeURIComponent(String(r.id))}`} className="map-report-row"><span className={`map-list-pin pin-tone-${i%4}`}><MapPin size={18}/></span><span className="map-report-info"><strong>{r.title}</strong><small>{r.area} · {r.landmark}</small><span><Badge>{r.status}</Badge></span></span><ChevronRight size={17}/></Link>)}{!filtered.length&&<div className="empty-mini">No locations match these filters.</div>}</div></div></div></div></Shell>}
-function AdminDashboard({reports,setReports,resetAll}){const [search,setSearch]=useState('');const [filter,setFilter]=useState('All statuses');const [editing,setEditing]=useState(null);const [confirm,setConfirm]=useState(null);const [toast,setToast]=useState('');const [activity,setActivity]=useState([]);const [editForm,setEditForm]=useState({});useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(''),3000);return()=>clearTimeout(t)},[toast]);const visible=reports.filter(r=>`${r.id} ${r.title} ${r.area}`.toLowerCase().includes(search.toLowerCase())&&(filter==='All statuses'||r.status===filter));function patch(id,changes){const old=reports.find(r=>r.id===id);setReports(prev=>prev.map(r=>r.id===id?{...r,...changes,history:[...(r.history||[]),...(changes.status&&changes.status!==r.status?[{status:changes.status,date:new Date().toISOString(),note:'Updated in demo administration'}]:[])]}:r));setActivity(a=>[{id:Date.now(),text:`${id} updated${changes.status?` to ${changes.status}`:''}`,date:new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'})},...a].slice(0,6));setToast('Changes saved to this browser.');}function saveEdit(){patch(editing,{...editForm});setEditing(null)}return <Shell><div className="content-page"><PageHead eyebrow="SIMULATED WORKSPACE" title="Demo administration" description="Manage sample reports and demonstrate a municipal review workflow." actions={<button className="button button-outline" onClick={()=>setConfirm('reset')}><RotateCcw size={16}/> Reset demo data</button>}/><div className="admin-warning"><ShieldCheck size={20}/><div><strong>Demonstration mode — changes are stored in this browser only.</strong><p>This is not a secure municipal administration system. No reports are sent to real authorities.</p></div></div><div className="stats-grid admin-stats"><StatCard label="All reports" value={reports.length} sub="Current local dataset" icon={ClipboardList}/><StatCard label="Awaiting review" value={reports.filter(r=>['Reported','Under Review'].includes(r.status)).length} sub="Need review" icon={Clock3} tone="peach"/><StatCard label="Resolved" value={reports.filter(r=>r.status==='Resolved').length} sub="Closed in demo" icon={CheckCircle2} tone="sage"/></div><section className="panel admin-panel"><div className="panel-heading"><div><h2>Manage reports</h2><p>Update a report's status or edit its details.</p></div><span className="demo-pill"><span/> Local changes</span></div><div className="admin-toolbar"><div className="search-box"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search reports..."/></div><label className="inline-select"><Filter size={15}/><select value={filter} onChange={e=>setFilter(e.target.value)}><option>All statuses</option>{['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'].map(s=><option key={s}>{s}</option>)}</select></label></div><div className="table-scroll"><table><thead><tr><th>Report</th><th>Area</th><th>Urgency</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visible.map(r=><tr key={r.id}><td><div className="table-report"><span className="table-thumb"><Recycle size={16}/></span><span><strong>{r.title}</strong><small>{r.id}</small></span></div></td><td>{r.area}</td><td><select className="table-select" value={r.urgency} onChange={e=>patch(r.id,{urgency:e.target.value})} aria-label={`Urgency for ${r.id}`}>{['Low','Medium','High'].map(s=><option key={s}>{s}</option>)}</select></td><td><select className="table-select" value={r.status} onChange={e=>patch(r.id,{status:e.target.value})} aria-label={`Status for ${r.id}`}>{['Reported','Under Review','Cleanup Scheduled','In Progress','Resolved'].map(s=><option key={s}>{s}</option>)}</select></td><td><div className="action-buttons"><button className="icon-button" onClick={()=>{setEditing(r.id);setEditForm({title:r.title,area:r.area,landmark:r.landmark,description:r.description})}} aria-label={`Edit ${r.id}`}><SlidersHorizontal size={16}/></button><Link to={`/reports/${encodeURIComponent(String(r.id))}`} className="icon-button" aria-label={`View ${r.id}`}><ArrowRight size={16}/></Link><button className="icon-button danger-icon" onClick={()=>setConfirm(r.id)} aria-label={`Delete ${r.id}`}><Trash2 size={16}/></button></div></td></tr>)}</tbody></table>{!visible.length&&<div className="empty-mini">No reports match this search.</div>}</div></section><div className="admin-bottom-grid"><section className="panel"><div className="panel-heading"><div><h2>Recent admin activity</h2><p>Actions performed in this session</p></div><Activity size={18} className="muted"/></div>{activity.length?<div className="activity-list">{activity.map(a=><div key={a.id}><span className="activity-dot"/><div><strong>{a.text}</strong><small>{a.date}</small></div></div>)}</div>:<div className="empty-mini">No changes yet. Update a status or edit a report to see activity here.</div>}</section><section className="panel reset-panel"><span className="reset-illustration"><RotateCcw size={24}/></span><h2>Start fresh</h2><p>Restore the original set of sample reports. This will discard locally created reports and demo edits.</p><button className="button button-outline" onClick={()=>setConfirm('reset')}>Reset all demo data</button></section></div>{editing&&<div className="modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)setEditing(null)}}><form className="modal-card" onSubmit={e=>{e.preventDefault();saveEdit()}}><button type="button" className="modal-close icon-button" onClick={()=>setEditing(null)} aria-label="Close edit dialog"><X/></button><div className="eyebrow">EDIT REPORT</div><h2>Update report details</h2><p>Changes are saved locally for this demonstration.</p>{[['title','Issue title'],['area','Neighborhood'],['landmark','Street or landmark']].map(([k,label])=><label className="field" key={k}><span>{label}</span><input required value={editForm[k]||''} onChange={e=>setEditForm(f=>({...f,[k]:e.target.value}))}/></label>)}<label className="field"><span>Description</span><textarea rows="3" value={editForm.description||''} onChange={e=>setEditForm(f=>({...f,description:e.target.value}))}/></label><div className="form-actions"><button type="button" className="button button-ghost" onClick={()=>setEditing(null)}>Cancel</button><button className="button button-primary" type="submit">Save changes <Check size={16}/></button></div></form></div>}{confirm&&<div className="modal-backdrop"><div className="modal-card confirm-card"><span className="confirm-icon"><AlertTriangle size={24}/></span><h2>{confirm==='reset'?'Reset demo data?':'Delete this report?'}</h2><p>{confirm==='reset'?'This restores the original sample reports and removes locally created reports and changes.':'This report will be removed from this browser’s demo dataset.'}</p><div className="form-actions"><button className="button button-ghost" onClick={()=>setConfirm(null)}>Cancel</button><button className="button button-primary" onClick={()=>{if(confirm==='reset'){resetAll();setActivity([]);setToast('Demo data restored.')}else{setReports(prev=>prev.filter(r=>r.id!==confirm));setToast('Report deleted.')}setConfirm(null)}}>{confirm==='reset'?'Reset data':'Delete report'}</button></div></div></div>}{toast&&<div className="toast"><CheckCircle2 size={18}/>{toast}</div>}</div></Shell>}
-function About(){return <div className="public-page"><PublicNav/><div className="wrap about-page"><div className="about-hero"><div className="eyebrow">ABOUT CLEANSTREET</div><h1>Cleaner streets are<br/><em>a shared responsibility.</em></h1><p>CleanStreet is a community-focused concept designed to make it easier to report waste issues, follow progress, and understand the collective impact of neighborhood action.</p><Link to="/report" className="button button-primary">Report an issue <ArrowRight size={16}/></Link></div><div className="about-grid"><article><span className="about-icon"><AlertTriangle/></span><h2>The challenge</h2><p>Overflowing bins, illegal dumping, and litter can make public spaces less pleasant and create avoidable environmental concerns. People need a simple way to bring attention to these issues.</p></article><article><span className="about-icon peach"><ClipboardList/></span><h2>Our approach</h2><p>CleanStreet organizes community reports in one place, makes each report's current demo status easy to understand, and presents aggregate activity in a clear dashboard.</p></article><article><span className="about-icon olive"><Leaf/></span><h2>Expected impact</h2><p>By making issues more visible, a future real-world version could help communities coordinate, encourage responsible waste disposal, and track cleanup outcomes.</p></article></div><section className="about-work"><div><div className="eyebrow">THE WORKFLOW</div><h2>From noticing a problem<br/>to tracking progress.</h2></div><div className="about-work-steps"><div><b>01</b><span><strong>Share a report</strong><small>Describe the issue, location, and optional photo.</small></span></div><div><b>02</b><span><strong>Review the details</strong><small>Explore reports, categories, and status updates.</small></span></div><div><b>03</b><span><strong>Monitor the demo impact</strong><small>See how the local report dataset changes over time.</small></span></div></div></section><div className="limitation-note"><ShieldCheck size={21}/><div><strong>Student project prototype</strong><p>This frontend uses dummy data and browser localStorage only. It has no backend, database, user accounts, or municipal integration. Report actions are simulated locally and do not notify public services.</p></div></div></div><PublicFooter/></div>}
-function NotFound(){return <Shell><div className="content-page"><div className="empty-state"><span><CircleHelp size={28}/></span><h2>Page not found</h2><p>The page you’re looking for doesn’t exist.</p><Link to="/" className="button button-primary">Return home</Link></div></div></Shell>}
-export default function App(){const [reports,setReportsState]=useState(loadReports);const location=useLocation();useEffect(()=>{saveReports(reports)},[reports]);const setReports=fn=>setReportsState(prev=>typeof fn==='function'?fn(prev):fn);const addReport=r=>setReports(prev=>[r,...prev]);const resetAll=()=>setReportsState(resetReports());return <Routes><Route path="/" element={<Home reports={reports}/>}/><Route path="/report" element={<ReportIssue addReport={addReport}/>}/><Route path="/reports" element={<Reports reports={reports}/>}/><Route path="/reports/:id" element={<ReportDetails reports={reports} updateReport={(id,c)=>setReports(prev=>prev.map(r=>r.id===id?{...r,...c}:r))}/>}/><Route path="/dashboard" element={<Dashboard reports={reports}/>}/><Route path="/map" element={<MapView reports={reports}/>}/><Route path="/about" element={<About/>}/><Route path="/admin" element={<AdminDashboard reports={reports} setReports={setReports} resetAll={resetAll}/>}/><Route path="*" element={<NotFound/>}/></Routes>}
+
+export default function App() {
+  const [reports, setReports] = useState(loadReports);
+  const [theme, setTheme] = useState(getSavedTheme);
+  const [ecoPoints, setEcoPoints] = useState(getEcoPoints);
+  const [notifications, setNotifications] = useState(getNotifications);
+  const location = useLocation();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  // Persist reports
+  useEffect(() => {
+    saveReports(reports);
+  }, [reports]);
+
+  // Apply & Persist Theme
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    saveTheme(theme);
+  }, [theme]);
+
+  // Persist Notifications
+  useEffect(() => {
+    saveNotifications(notifications);
+  }, [notifications]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const handleAddReport = (newReport) => {
+    setReports(prev => [newReport, ...prev]);
+
+    // Add notification
+    setNotifications(prev => [
+      {
+        id: `notif_${Date.now()}`,
+        title: 'New Incident Logged',
+        text: `Report ${newReport.id} successfully registered in ${newReport.area}.`,
+        date: 'Just now',
+        unread: true,
+        reportId: newReport.id
+      },
+      ...prev.slice(0, 7)
+    ]);
+  };
+
+  const handleUpvote = (id) => {
+    setReports(prev =>
+      prev.map(r => {
+        if (r.id === id) {
+          const wasUpvoted = !!r.upvotedByMe;
+          const updatedUpvotes = wasUpvoted ? Math.max(0, (r.upvotes || 1) - 1) : (r.upvotes || 0) + 1;
+          
+          if (!wasUpvoted) {
+            handleAwardPoints(10); // Award 10 points for endorsing
+          }
+
+          return {
+            ...r,
+            upvotes: updatedUpvotes,
+            upvotedByMe: !wasUpvoted
+          };
+        }
+        return r;
+      })
+    );
+  };
+
+  const handleAddComment = (reportId, comment) => {
+    setReports(prev =>
+      prev.map(r => {
+        if (r.id === reportId) {
+          return {
+            ...r,
+            comments: [...(r.comments || []), comment]
+          };
+        }
+        return r;
+      })
+    );
+  };
+
+  const handleUpdateReport = (id, changes) => {
+    setReports(prev =>
+      prev.map(r => {
+        if (r.id === id) {
+          return { ...r, ...changes };
+        }
+        return r;
+      })
+    );
+
+    if (changes.status) {
+      setNotifications(prev => [
+        {
+          id: `notif_${Date.now()}`,
+          title: 'Status Update',
+          text: `Report ${id} transitioned to stage: ${changes.status}.`,
+          date: 'Just now',
+          unread: true,
+          reportId: id
+        },
+        ...prev.slice(0, 7)
+      ]);
+    }
+  };
+
+  const handleDeleteReport = (id) => {
+    setReports(prev => prev.filter(r => r.id !== id));
+  };
+
+  const handleResetAll = () => {
+    const refreshed = resetReports();
+    setReports(refreshed);
+  };
+
+  const handleAwardPoints = (points) => {
+    const updated = addEcoPoints(points);
+    setEcoPoints(updated);
+  };
+
+  const handleMarkNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  };
+
+  return (
+    <div className="public-page" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        ecoPoints={ecoPoints}
+        notifications={notifications}
+        onMarkNotificationsRead={handleMarkNotificationsRead}
+      />
+
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/" element={<Home reports={reports} onUpvote={handleUpvote} />} />
+          <Route path="/reports" element={<Reports reports={reports} onUpvote={handleUpvote} />} />
+          <Route 
+            path="/reports/:id" 
+            element={
+              <ReportDetails 
+                reports={reports} 
+                onUpvote={handleUpvote} 
+                onAddComment={handleAddComment} 
+              />
+            } 
+          />
+          <Route 
+            path="/report" 
+            element={
+              <ReportIssue 
+                onAddReport={handleAddReport} 
+                onAwardPoints={handleAwardPoints} 
+              />
+            } 
+          />
+          <Route path="/map" element={<MapView reports={reports} />} />
+          <Route path="/dashboard" element={<Dashboard reports={reports} />} />
+          <Route 
+            path="/leaderboard" 
+            element={<Leaderboard ecoPoints={ecoPoints} reports={reports} />} 
+          />
+          <Route 
+            path="/admin" 
+            element={
+              <AdminDashboard 
+                reports={reports} 
+                onUpdateReport={handleUpdateReport} 
+                onResetAll={handleResetAll} 
+                onDeleteReport={handleDeleteReport} 
+              />
+            } 
+          />
+          <Route path="/about" element={<About />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
